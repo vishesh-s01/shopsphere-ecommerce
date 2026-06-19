@@ -1,0 +1,32 @@
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import { Auth0Provider } from "@auth0/auth0-react";
+
+import AuthTokenBridge from "./auth/AuthTokenBridge";
+import { UserProvider } from "./context/UserContext";
+import "./firebase/config";
+
+import App from "./App";
+import "./App.css";
+
+createRoot(document.getElementById("root")).render(
+  <StrictMode>
+    <BrowserRouter>
+      <Auth0Provider
+        domain={import.meta.env.VITE_AUTH0_DOMAIN}
+        clientId={import.meta.env.VITE_AUTH0_CLIENT_ID}
+        authorizationParams={{
+          redirect_uri: window.location.origin,
+          audience: import.meta.env.VITE_AUTH0_AUDIENCE,
+        }}
+      >
+        <AuthTokenBridge />
+
+        <UserProvider>
+          <App />
+        </UserProvider>
+      </Auth0Provider>
+    </BrowserRouter>
+  </StrictMode>
+);
