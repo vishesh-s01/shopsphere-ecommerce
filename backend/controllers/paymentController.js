@@ -84,9 +84,9 @@ for (const item of cart.items) {
         quantity: item.quantity,
       })),
 
-      success_url: `http://localhost:5173/payment-result?orderId=${order._id}&session_id={CHECKOUT_SESSION_ID}`,
+success_url: `${process.env.CLIENT_URL}/payment-result?orderId=${order._id}&session_id={CHECKOUT_SESSION_ID}`,
 
-      cancel_url: `http://localhost:5173/cart`,
+cancel_url: `${process.env.CLIENT_URL}/cart`,
 
       metadata: {
         userId,
