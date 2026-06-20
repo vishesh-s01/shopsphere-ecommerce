@@ -7,27 +7,42 @@ function PaymentResult({ darkMode, toggleDarkMode }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get("orderId");
+  const [notFound, setNotFound] = useState(false);
 
   const [order,   setOrder]   = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchOrder = async (id) => {
-    try {
-      if (!id) { setLoading(false); return; }
-      const res = await axios.get(`/orders/${id}`);
-      setOrder(res.data.order);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+const fetchOrder = async (id) => {
+  try {
+    if (!id) return;
 
-  useEffect(() => {
+    const res = await axios.get(`/orders/${id}`);
+
+    if (!res.data.order) {
+      setNotFound(true);
+      return;
+    }
+
+    setOrder(res.data.order);
+  } catch (err) {
+    console.error(err);
+    setNotFound(true);
+  } finally {
+    setLoading(false);
+  }
+};
+
+useEffect(() => {
+  if (!orderId) return;
+
+  fetchOrder(orderId);
+
+  const interval = setInterval(() => {
     fetchOrder(orderId);
-    const interval = setInterval(() => fetchOrder(orderId), 5000);
-    return () => clearInterval(interval);
-  }, [orderId]);
+  }, 5000);
+
+  return () => clearInterval(interval);
+}, [orderId]);
 
   const STATUS_CONFIG = {
     paid:     { label: "Payment Successful",  sub: "Your order is confirmed and being prepared.",          icon: "✓", mod: "success" },
@@ -82,18 +97,30 @@ function PaymentResult({ darkMode, toggleDarkMode }) {
     </>
   );
 
+  if (loading) return (
+  <>
+    <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+    <div>Loading...</div>
+  </>
+);
+
   /* ── Not found ── */
-  if (!order) return (
-    <>
-      <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
-      <div className="ss-empty-state">
-        <div className="ss-empty-state__icon">📭</div>
-        <h2 className="ss-empty-state__title">Order Not Found</h2>
-        <p className="ss-empty-state__sub">We couldn't locate this order.</p>
-        <button className="ss-btn ss-btn--primary" onClick={() => navigate("/products")}>Back to Home</button>
-      </div>
-    </>
-  );
+if (notFound) return (
+  <>
+    <Navbar darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+    <div className="ss-empty-state">
+      <div className="ss-empty-state__icon">📭</div>
+      <h2 className="ss-empty-state__title">Order Not Found</h2>
+      <p className="ss-empty-state__sub">We couldn't locate this order.</p>
+      <button
+        className="ss-btn ss-btn--primary"
+        onClick={() => navigate("/products")}
+      >
+        Back to Home
+      </button>
+    </div>
+  </>
+);
 
   const subtotal = order.items?.reduce((s, i) => s + i.price * i.quantity, 0) ?? order.totalAmount;
   const discount = order.discount ?? 0;
